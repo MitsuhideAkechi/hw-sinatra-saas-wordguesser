@@ -4,8 +4,42 @@ class WordGuesserGame
 
   # Get a word from remote "random word" service
 
-  def initialize(word)
-    @word = word
+  def initialize(new_word)
+    @word = new_word
+    @guesses = ''
+    @wrong_guesses = ''
+  end
+
+  attr_accessor :word, :guesses, :wrong_guesses
+
+  def guess(guess_letter)
+    raise ArgumentError unless !guess_letter.nil? && guess_letter.match?(/^[a-z]$/i)
+
+    guess_letter.downcase!
+    valid = [@guesses, @wrong_guesses].none? { |str| str.include? guess_letter }
+    return valid unless valid
+
+    if @word.include? guess_letter
+      @guesses << guess_letter
+    else
+      @wrong_guesses << guess_letter
+    end
+  end
+
+  def word_with_guesses
+    @word.each_char.map do |c|
+      @guesses.include?(c) ? c : '-'
+    end.join
+  end
+
+  def check_win_or_lose
+    if @wrong_guesses.length >= 7
+      :lose
+    elsif @word == word_with_guesses
+      :win
+    else
+      :play
+    end
   end
 
   # You can test it by installing irb via $ gem install irb
@@ -17,7 +51,7 @@ class WordGuesserGame
     require 'net/http'
     uri = URI('http://randomword.saasbook.info/RandomWord')
     Net::HTTP.new('randomword.saasbook.info').start do |http|
-      return http.post(uri, "").body
+      return http.post(uri, '').body
     end
   end
 end
